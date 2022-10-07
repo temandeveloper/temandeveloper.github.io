@@ -49,7 +49,7 @@
             <div class="container mx-auto">
                 <div id="videostreambox" class="grid-cols-3 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
                     <div class="w-full overflow-hidden col-span-2 row-span-2">
-                        <video id="localVideo" class="userstream videoboxhead rounded-xl"></video>
+                        <video id="localVideo" class="userstream videoboxhead rounded"></video>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
       <div class="drawer-side">
         <label for="my-drawer-2" class="drawer-overlay"></label> 
         <div class="p-4 pt-14 overflow-y-auto w-24 h-full text-base-content fixed">
-          <ul class="menu menu-vertical rounded-xl " style="background-color: #393262;">
+          <ul class="menu menu-vertical rounded " style="background-color: #393262;">
             <li><button type="button" id="btncallend" class="text-purple-sp hover:text-white"><i class=" relative p-1 text-xl fa-solid fa-house-chimney"></i></button></li>
             <li><button type="button" id="audioact" class="text-purple-sp hover:text-white"><i class=" p-1 text-xl fa fa-microphone relative left-1"></i></button></li>
             <li><button type="button" id="camact" class="text-purple-sp hover:text-white"><i class=" p-1 text-xl fa-solid fa-video"></i></button></li>
@@ -121,19 +121,19 @@
   <style>
       .videoboxhead {
           width:100%; 
-          height:93%; 
+          height:392px; 
           object-fit: cover;
       }
       .videobox {
           width:100%; 
-          height:86%; 
+          height:177px; 
           object-fit: cover;
           position: relative;
       }
   </style>
   <script src="https://unpkg.com/peerjs@1.4.5/dist/peerjs.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="<?= base_url('/assets/js/inputEmoji.js') ?>"></script>
+  <script src="inputEmoji.js"></script>
   <script>
     $(function () {
       $('.inputemo').emoji({place: 'after'});
@@ -153,8 +153,21 @@
         let userclose = "";
         var indexping = 0;
         var indexclose = [];
+        var userMediaSetting = {
+            "audio" : true,
+            "video": {
+                "width": {
+                    "min": 640,
+                    "max": 1024
+                },
+                "height": {
+                    "min": 480,
+                    "max": 768
+                }
+            }
+        }
 
-        //========================= CODE VOICE RECOGNITION ===================//
+        //========================= CODE VOICE RECOGNITION (next feature speech to text)===================//
 
         // window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         // const recognition = new SpeechRecognition();
@@ -189,72 +202,83 @@
 
 
 
-        // $("#sharescreen").click(function(){
-        //     const remotePeerId = remoteId.value;
-        //     if(remotePeerId == ""){
-        //         alert("Silahkan masukkan invitation id terlebih dahulu");
-        //     }else{
-        //         var displayMediaOptions = {
-        //             video: {
-        //                 cursor: "always"
-        //             },
-        //             audio: false
-        //         };
-        //         navigator.mediaDevices.getDisplayMedia(displayMediaOptions)
-        //         .then(function (stream) {
+        $("#sharescreen").click(async function(){
+            screenSharing();
+        });
 
-        //             stream.getVideoTracks()[0].addEventListener('ended', () => {
-        //                 //perform your task here
-        //                 console.log("stop share");
-        //                 $("#localscreen").parent().remove();
-        //             });
+        async function screenSharing() {
+            await navigator.mediaDevices.getDisplayMedia({aspectRatio: {ideal: 1}}).then(stream => {
+                const localVideoStream = document.getElementById("localVideo");
+                localVideoStream.srcObject = stream;
+                localVideoStream.onloadedmetadata = () => localVideoStream.play();
+                
+                usersconnect = [...new Set(usersconnect)]; //remove duplicate
+                for (let key of usersconnect) {
+                  console.log(peer._connections.get(key)[0].peerConnection);
+                  console.log(peer._connections.get(key)[0].peerConnection.getSenders()[0]);
+                  console.log(stream);
+                  console.log(stream.getTracks()[0]);
+                  peer._connections.get(key)[0].peerConnection.getSenders()[0].replaceTrack(stream.getTracks()[0])
+                }
 
-        //             // dataStream = stream;
-        //             $("#videostreambox").append("<div class='w-full overflow-hidden col-span-2 row-span-2'><video id='localscreen' class='userstream videobox rounded-xl'></video></div>");
-        //             const localVideoStream = document.getElementById("localscreen");
-        //             localVideoStream.srcObject = stream;
-        //             localVideoStream.onloadedmetadata = () => localVideoStream.play();
-        //             console.log("send share screen");
+                stream.getTracks()[0].addEventListener('ended', () => {
+                    //perform your task here
+                    console.log("stop screen share");
+                    cameraSharing();
+                });
+            })
+        }
 
-        //             const call = peer.call(remotePeerId, stream);
 
-        //             // var idelm = remotePeerId+"-remoteid";
-        //             // statuscon = "client"; //penanda kalo dia client
-        //             call.on("stream", stream => {
-        //                 console.log("share screen is generate");
-        //                 //break row
-        //                 $("#videostreambox").append("<div class='col-lg'><video id='"+idelm+"' class='userstream videobox' ></video></div>");
-        //                 const remoteVideo = document.getElementById(idelm);
-        //                 remoteVideo.srcObject = stream;
-        //                 remoteVideo.onloadedmetadata = () => remoteVideo.play();
-        //             });
-        //         });
-        //     }
-            
-        // });
+        async function cameraSharing() {
+            await navigator.mediaDevices.getUserMedia(userMediaSetting).then( stream => {
+                const localVideoStream = document.getElementById("localVideo");
+                localVideoStream.srcObject = stream;
+                localVideoStream.onloadedmetadata = () => localVideoStream.play();
+
+                usersconnect = [...new Set(usersconnect)]; //remove duplicate
+                for (let key of usersconnect) {
+                  console.log(peer._connections.get(key)[0].peerConnection);
+                  console.log(peer._connections.get(key)[0].peerConnection.getSenders()[0]);
+                  console.log(stream);
+                  console.log(stream.getTracks()[0]);
+                  peer._connections.get(key)[0].peerConnection.getSenders()[0].replaceTrack(stream.getTracks()[0])
+                }
+
+                $("#camact").click(function(){
+                    stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
+                });
+
+                $("#audioact").click(function(){
+                    stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
+                });
+
+            });
+        }
 
 
         //========================== CODE STREAM =============================//
+        
 
-        navigator.mediaDevices.getUserMedia({audio: false, video: true}).then( stream => {
+        navigator.mediaDevices.getUserMedia(userMediaSetting).then( stream => {
             dataStream = stream;
             const localVideoStream = document.getElementById("localVideo");
             localVideoStream.srcObject = stream;
             localVideoStream.onloadedmetadata = () => localVideoStream.play();
 
+            stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled; // auto muute if starting
+
             $("#camact").click(function(){
-                // console.log(stream.getVideoTracks()[0].enabled);
                 stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
             });
 
-             $("#audioact").click(function(){
-                // console.log(stream.getVideoTracks()[0].enabled);
+            $("#audioact").click(function(){
                 stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
             });
 
         });
 
-        //this code is similarity of document ready on javascript
+        //this code is similarity of document ready on jquery
         peer.on("open", id => {
             localId.value = id;
         });
@@ -283,16 +307,6 @@
                 var idelm = remotePeerId+"-remoteid";
                 statuscon = "client"; //flex for client 
 
-                //create data connection
-                // var conn = peer.connect(remotePeerId);
-                // conn.on('open', function() {
-                //     // Send messages
-                //     conn.send({
-                //         status: 'tryconnectfirst',
-                //         userid: usersconnect,
-                //     });
-                // });
-
                 //on stream data target
                 call.on("stream", stream => {
                     usersconnect.push(remotePeerId);
@@ -302,7 +316,7 @@
                     $("#localVideo").addClass("videobox");
                     $("#localVideo").parent().removeClass("col-span-2");
                     $("#localVideo").parent().removeClass("row-span-2");
-                    $("#videostreambox").append($("<div class='w-full overflow-hidden col-span-2 row-span-2'><video id='"+idelm+"' class='userstream videoboxhead rounded-xl' ></video></div>").on("click",function(){
+                    $("#videostreambox").append($("<div class='w-full overflow-hidden col-span-2 row-span-2'><video id='"+idelm+"' class='userstream videoboxhead rounded' ></video></div>").on("click",function(){
                       console.log("change position1");
                       $(".userstream").first().removeClass("videoboxhead");
                       $(".userstream").first().addClass("videobox");
@@ -318,15 +332,13 @@
                     const remoteVideo = document.getElementById(idelm);
                     remoteVideo.srcObject = stream;
                     remoteVideo.onloadedmetadata = () => remoteVideo.play();
-                    //ping connection
-                    // checkping();
                 });
             }
            
         });
 
         $(document).ready(function(){
-          // checkping();
+          checkping();
         });
 
         peer.on("call", call => {
@@ -339,7 +351,7 @@
               call.on("stream", stream => {
                   console.log("generate element caller2");
                   //break row
-                  $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded-xl' ></video></div>").on("click",function(){
+                  $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
                     console.log("change position2");
                     $(".userstream").first().removeClass("videoboxhead");
                     $(".userstream").first().addClass("videobox");
@@ -361,16 +373,6 @@
                       console.log('broadcast all user connect :'+usersconnect.length);
                       console.log(usersconnect);
                       usersconnect = [...new Set(usersconnect)]; //remove duplicate
-                      // usersconnect.forEach(function(item, index){
-                      //     var conn = peer.connect(item);
-                      //     conn.on('open', function() {
-                      //         // Send messages
-                      //         conn.send({
-                      //             status: 'broadcast',
-                      //             userid: idpemanggil,
-                      //         });
-                      //     });
-                      // });
 
                       console.log('send all users connect to new user connect');
                       var conn = peer.connect(idpemanggil);
@@ -396,22 +398,6 @@
         kirimPesan.addEventListener("click", function(){
           sendmassage();
         });
-
-        // $(window).on('beforeunload', function() {
-        //   usersconnect.forEach(function(item, index){
-        //         var conn = peer.connect(item);
-        //         const massage = {
-        //             status : 'testmessage',
-        //             massage : "test disconnect",
-        //         };
-        //         // Send messages
-        //         console.log('try to send massage '.massage);
-        //         conn.on('open', function() {
-        //             // Send messages
-        //             conn.send(massage);
-        //         });
-        //     });
-        // });
 
         $("#pesan").keydown(function(e){
             if(e.which == 13){
@@ -451,108 +437,6 @@
             $("#pesan").val("");
           }
         }
-
-        // peer.on('disconnect', function (id) {
-        //   console.log('disconnect with id ' + id);
-        // });
-
-        // peer.on('close', function (id) {
-        //   console.log('close with id ' + id);
-        // });
-
-        // window.onbeforeunload = function () {
-        //     var conn = peer.connect(remoteId.value);
-        //     const massage = {
-        //         status : 'userdisconnect1',
-        //         userid : localId.value,
-        //     };
-        //     // Send messages
-        //     console.log('try to send massage '.massage);
-        //     conn.on('open', function() {
-        //         // Send messages
-        //         conn.send(massage);
-        //     });
-        // };
-
-        // window.addEventListener('beforeunload', function () {
-        //     console.log("beforeunload");
-        //     var conn = peer.connect(remoteId.value);
-        //     const massage = {
-        //         status : 'userdisconnect',
-        //         userid : localId.value,
-        //     };
-        //     // Send messages
-        //     console.log('try to send massage '.massage);
-        //     conn.on('open', function() {
-        //         // Send messages
-        //         conn.send(massage);
-        //     });
-        // }, false);
-
-        // window.addEventListener('keyup', function (e) {
-        //     if (e.keyCode == 13)
-        //         console.log("keyup");
-        //         var conn = peer.connect(remoteId.value);
-        //         const massage = {
-        //             status : 'userdisconnect',
-        //             userid : localId.value,
-        //         };
-        //         // Send messages
-        //         console.log('try to send massage '.massage);
-        //         conn.on('open', function() {
-        //             // Send messages
-        //             conn.send(massage);
-        //         });
-        // }, false);
-
-
-        // peer.on('error', function(err) { 
-        //   console.log(err);  
-        //   console.log(err.id);  
-        //   console.log("type");
-        //   console.log(err.type);
-        //   console.log("list peer connections");
-        //   console.log(peer.connections);
-        //   console.log(userclose);
-
-        //   if(err.type == 'peer-unavailable' && userclose != ""){
-
-        //       console.log("on close");
-        //       console.log("close user ",userclose);
-        //       var idusrclose = userclose+"-remoteid";
-        //       $("#"+idusrclose+"").parent().remove();
-
-        //       //remove id user disconnect
-        //       const index = usersconnect.indexOf(userclose);
-        //       if (index > -1) { // only splice array when item is found
-        //         usersconnect.splice(index, 1); // 2nd parameter means remove one item only
-        //       }
-        //       userclose = "";
-        //       usersconnect.forEach(function(item, index){
-        //           if(localId.value != item){
-        //               var conn = peer.connect(item);
-        //               const massage = {
-        //                   status  : 'getallnewusers',
-        //                   users   : usersconnect,
-        //               };
-        //               // Send messages
-        //               console.log('broadcast all user ');
-        //               console.log(usersconnect);
-
-        //               conn.on('open', function() {
-        //                   // Send messages
-        //                   conn.send(massage);
-        //               });
-        //           }
-        //       });
-        //   }
-          
-        // });
-
-        // peer.on('close', function(closedat) { 
-        //   console.log("closedat");  
-        //   console.log(closedat);  
-        // });
 
         const closepeerclient = (userclose) => {
             var idusrclose = userclose+"-remoteid";
@@ -657,53 +541,6 @@
             console.log("status open ",stateopen);
             console.log("status connectionState ",statechange);
 
-
-            // con.peerConnection.onconnectionstatechange = () => {
-            //   if (!con) return;
-
-            //   const state = con.peerConnection.connectionState;
-
-            //   console.log(`connectionStateChanged:${state}`);
-
-            //   switch (state) {
-            //     case 'failed':
-            //       // do something
-            //       closepeerclient(con.peer);
-            //       console.log("failed");
-            //       break;
-            //     case 'disconnected':
-            //       // do something
-            //       closepeerclient(con.peer);
-            //       console.log("disconnected");
-            //       break;
-            //     case 'closed':
-            //       // do something 
-            //       console.log("closed");
-            //       break;
-            //   }
-            // };
-
-            // if(!con._open){
-            //     userclose = con.peer
-            //     usersconnect.forEach(function(item, index){
-            //       if(localId.value != item){
-            //           var conn = peer.connect(item);
-            //           conn.on('error', function() {
-            //               console.log("error connection")
-            //           });
-            //       }
-            //   });
-            // }
-
-            // con.on('close', function(data){
-            //   console.log("onclose");
-            // });
-
-            // con.on('error', function(data){
-            //   console.log("onerror");
-            // });
-
-
             con.on('data', function(data){
                 console.log('Incoming data is :');
                 console.log(data);
@@ -726,9 +563,7 @@
                             var idelm = item+"-remoteid";
                             call.on("stream", stream => {
                                 console.log("generate element :");
-                                //break row
-                                // $("#videostreambox").append("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded-xl'></video></div>");
-                                $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded-xl' ></video></div>").on("click",function(){
+                                $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
                                   console.log("change position4");
                                   $(".userstream").first().removeClass("videoboxhead");
                                   $(".userstream").first().addClass("videobox");
