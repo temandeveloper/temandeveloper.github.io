@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0001 Prototype WebRTC GoDiscus</title>
+    <title>v0.0002 Prototype WebRTC GoDiscus</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -299,6 +299,10 @@
 
 
         btnCall.addEventListener("click", function(){
+	    var peer = new Peer("702d30b1-2e68-4923-99b0-b1bce0bbfd09-"+Math.floor(Math.random() * 1001));
+		 peer.on("open", id => {
+		    localId.value = id;
+		});
             const remotePeerId = remoteId.value;
             if(remotePeerId == ""){
                 alert("Silahkan masukkan invitation id terlebih dahulu");
