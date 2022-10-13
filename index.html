@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0002 Prototype WebRTC GoDiscus</title>
+    <title>v0.0003 Prototype WebRTC GoDiscus</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -49,7 +49,7 @@
             <div class="container mx-auto">
                 <div id="videostreambox" class="grid-cols-3 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
                     <div class="w-full overflow-hidden col-span-2 row-span-2">
-                        <video id="localVideo" class="userstream videoboxhead rounded"></video>
+                        <video id="localVideo" class="userstream videoboxhead rounded" muted></video>
                     </div>
                 </div>
             </div>
@@ -471,71 +471,37 @@
             });
         }
 
+        let disconnectcount = 0;
         async function checkping(){
           setInterval(async function () {
             console.log("ping connection");
-            if(usersconnect.length > 0){
-              usersconnect = [...new Set(usersconnect)]; //remove duplicate
-              let item = usersconnect[indexping];
-
-              if(indexping < usersconnect.length){
-                indexping++;
-              }else{
-                console.log("indexclose : "+indexclose)
-
-                if(indexclose.length > 0){
-                  console.log("user off : ")
-                  console.log(indexclose)
-
-                  indexclose.forEach(function(item){
-                    var idusrclose = item+"-remoteid";
-                    $("#"+idusrclose+"").parent().remove();
-
-                    //remove id user disconnect
-                    const index = usersconnect.indexOf(item);
-                    if (index > -1) { // only splice array when item is found
-                      usersconnect.splice(index, 1); // 2nd parameter means remove one item only
-                    }
-                  });
-
-                  indexclose = [];
-                }
-
-                indexping = 0;
-                item = usersconnect[indexping];
-              }
-
-              console.log("alldataping");
-              console.log(usersconnect);
-              console.log(item);
-              console.log("index "+indexping);
-              if(localId.value != item){
-                console.log("pingid");
-                console.log(item);
-                console.log(indexping);
-                //create data connection
-                var conn = await peer.connect(item);
-
-                // filtering id is connected, if id is not connected remove after last iteration (index 0) 
-                indexclose.push(item);
-                conn.peerConnection.onconnectionstatechange = () => {
-                  if (!conn) return;
-                  const state = conn.peerConnection.connectionState;
-                  console.log(`id:${conn.peer}`);
-                  console.log(`connectionStateChanged22:${state}`);
-                  if(state == "new" || state == "connecting" || state == "connected"){
-                    const index = indexclose.indexOf(conn.peer);
-                    if (index > -1) {
-                      indexclose.splice(index, 1);
-                    }
+            if(usersconnect.length > 0 && remoteId.value != ""){
+              //create data connection
+              var conn = await peer.connect(remoteId.value);
+              // filtering id is connected, if id is not connected remove after last iteration (index 0) 
+              conn.peerConnection.onconnectionstatechange = async () => {
+                if (!conn) return;
+                const state = await conn.peerConnection.connectionState;
+                console.log(`id:${conn.peer}`);
+                console.log(`connectionStateChanged22:${state}`);
+                if(state == "disconnected" || state == "failed"){
+                  if(disconnectcount == 3){
+                    gotoPeer();
+                  }else{
+                    disconnectcount++;
+                    console.log("disconnectcount : "+disconnectcount);
                   }
-                };
-                console.log("check conn");
-                console.log(conn);
-              }
+                }else{
+                  disconnectcount = 0;
+                }
+              };
             }
-          }, 3000);
+          }, 5000);
         }
+
+        peer.on('error', function(err){
+          console.log(err);
+        });
 
         //kode untuk menerima pesan
         peer.on('connection', async function(con){
