@@ -141,11 +141,7 @@
     })
   </script>
   <script>
-        const peer = new Peer('5ecd9c54-f7b9-4eda-8762-43071f0fb984-'+Math.floor((Math.random() * 10000) + 1), {
-                      host: 'localhost',
-                      port: 9000,
-                      path: '/myapp'
-                    });
+        const peer = new Peer();
         let dataStream;
         const localId = document.getElementById("localPeerId");
         const remoteId = document.getElementById("remotePeerId");
