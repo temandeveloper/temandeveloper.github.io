@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0003 Prototype WebRTC GoDiscus</title>
+    <title>v0.0004 Prototype WebRTC GoDiscus</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -47,9 +47,9 @@
         <div class="md:grid md:grid-cols-4 relative">
           <div class="md:col-span-3 pl-16">
             <div class="container mx-auto">
-                <div id="videostreambox" class="grid-cols-3 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
-                    <div class="w-full overflow-hidden col-span-2 row-span-2">
-                        <video id="localVideo" class="userstream videoboxhead rounded" muted></video>
+                <div id="videostreambox" class="grid-cols-2 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
+                    <div class="w-full overflow-hidden">
+                        <video id="localVideo" class="userstream videobox rounded" muted></video>
                     </div>
                 </div>
             </div>
@@ -121,26 +121,31 @@
   <style>
       .videoboxhead {
           width:100%; 
-          height:392px; 
+          height: 480px; 
           object-fit: cover;
       }
       .videobox {
+          margin-bottom: 20px;
           width:100%; 
-          height:177px; 
+          height:268px; 
           object-fit: cover;
           position: relative;
       }
   </style>
   <script src="https://unpkg.com/peerjs@1.4.5/dist/peerjs.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="inputEmoji.js"></script>
+  <script src="<?= base_url('/assets/js/inputEmoji.js') ?>"></script>
   <script>
     $(function () {
       $('.inputemo').emoji({place: 'after'});
     })
   </script>
   <script>
-        var peer = new Peer("702d30b1-2e68-4923-99b0-b1bce0bbfd09-"+Math.floor(Math.random() * 1001));
+        const peer = new Peer('5ecd9c54-f7b9-4eda-8762-43071f0fb984-'+Math.floor((Math.random() * 10000) + 1), {
+                      host: 'localhost',
+                      port: 9000,
+                      path: '/myapp'
+                    });
         let dataStream;
         const localId = document.getElementById("localPeerId");
         const remoteId = document.getElementById("remotePeerId");
@@ -153,19 +158,8 @@
         let userclose = "";
         var indexping = 0;
         var indexclose = [];
-        var userMediaSetting = {
-            "audio" : true,
-            "video": {
-                "width": {
-                    "min": 640,
-                    "max": 1024
-                },
-                "height": {
-                    "min": 480,
-                    "max": 768
-                }
-            }
-        }
+        let firstaudioopen = true;
+
 
         //========================= CODE VOICE RECOGNITION (next feature speech to text)===================//
 
@@ -229,12 +223,15 @@
             })
         }
 
-
         async function cameraSharing() {
-            await navigator.mediaDevices.getUserMedia(userMediaSetting).then( stream => {
+            await navigator.mediaDevices.getUserMedia({audio: { echoCancellation: true,noiseSuppression: true }, video: true}).then( stream => {
+                dataStream = stream;
                 const localVideoStream = document.getElementById("localVideo");
                 localVideoStream.srcObject = stream;
                 localVideoStream.onloadedmetadata = () => localVideoStream.play();
+                firstaudioopen = false;
+
+                stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
 
                 usersconnect = [...new Set(usersconnect)]; //remove duplicate
                 for (let key of usersconnect) {
@@ -249,7 +246,7 @@
                     stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
                 });
 
-                $("#audioact").click(function(){
+                $("#audioact").click(async function(){
                     stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
                 });
 
@@ -258,27 +255,29 @@
 
 
         //========================== CODE STREAM =============================//
-        
 
-        navigator.mediaDevices.getUserMedia(userMediaSetting).then( stream => {
+        navigator.mediaDevices.getUserMedia({audio: true,video:true}).then( stream => {
+
             dataStream = stream;
             const localVideoStream = document.getElementById("localVideo");
             localVideoStream.srcObject = stream;
             localVideoStream.onloadedmetadata = () => localVideoStream.play();
-
-            stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled; // auto muute if starting
 
             $("#camact").click(function(){
                 stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
             });
 
             $("#audioact").click(function(){
-                stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
+                // if(firstaudioopen){
+                //   cameraSharing();
+                // }else{
+                  stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
+                // }
             });
 
         });
 
-        //this code is similarity of document ready on jquery
+        //this code is similarity of document ready on javascript
         peer.on("open", id => {
             localId.value = id;
         });
@@ -299,36 +298,38 @@
 
 
         btnCall.addEventListener("click", function(){
-	    var peer = new Peer("702d30b1-2e68-4923-99b0-b1bce0bbfd09-"+Math.floor(Math.random() * 1001));
-		 peer.on("open", id => {
-		    localId.value = id;
-		});
-            const remotePeerId = remoteId.value;
+          gotoPeer()
+        });
+
+        //create call
+        const gotoPeer = () => {
+          const remotePeerId = remoteId.value;
             if(remotePeerId == ""){
                 alert("Silahkan masukkan invitation id terlebih dahulu");
             }else{
                 const call = peer.call(remotePeerId, dataStream);
                 var idelm = remotePeerId+"-remoteid";
                 statuscon = "client"; //flex for client 
-
+                console.log("Response Call : ");
+                console.log(call);
                 //on stream data target
                 call.on("stream", stream => {
                     usersconnect.push(remotePeerId);
                     console.log("generate element caller1");
                     //break row
-                    $("#localVideo").removeClass("videoboxhead");
+                    $("#localVideo").removeClass("videobox");
                     $("#localVideo").addClass("videobox");
                     $("#localVideo").parent().removeClass("col-span-2");
                     $("#localVideo").parent().removeClass("row-span-2");
-                    $("#videostreambox").append($("<div class='w-full overflow-hidden col-span-2 row-span-2'><video id='"+idelm+"' class='userstream videoboxhead rounded' ></video></div>").on("click",function(){
+                    $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
                       console.log("change position1");
-                      $(".userstream").first().removeClass("videoboxhead");
+                      $(".userstream").first().removeClass("videobox");
                       $(".userstream").first().addClass("videobox");
                       $(".userstream").first().parent().removeClass("col-span-2");
                       $(".userstream").first().parent().removeClass("row-span-2");
-                      $("#"+idelm+"").parent().prependTo("#videostreambox");
+                      $("#"+idelm+"").parent().prependTo("#videobox");
                       $("#"+idelm+"").removeClass("videobox");
-                      $("#"+idelm+"").addClass("videoboxhead");
+                      $("#"+idelm+"").addClass("videobox");
                       $("#"+idelm+"").parent().addClass("col-span-2");
                       $("#"+idelm+"").parent().addClass("row-span-2");
                     }));
@@ -338,13 +339,13 @@
                     remoteVideo.onloadedmetadata = () => remoteVideo.play();
                 });
             }
-           
-        });
+        }
 
         $(document).ready(function(){
           checkping();
         });
 
+        //answer call
         peer.on("call", call => {
             let idpemanggil = call.peer;
             if(!usersconnect.includes(idpemanggil)){
@@ -357,13 +358,13 @@
                   //break row
                   $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
                     console.log("change position2");
-                    $(".userstream").first().removeClass("videoboxhead");
+                    $(".userstream").first().removeClass("videobox");
                     $(".userstream").first().addClass("videobox");
                     $(".userstream").first().parent().removeClass("col-span-2");
                     $(".userstream").first().parent().removeClass("row-span-2");
                     $("#"+idelm+"").parent().prependTo("#videostreambox");
                     $("#"+idelm+"").removeClass("videobox");
-                    $("#"+idelm+"").addClass("videoboxhead");
+                    $("#"+idelm+"").addClass("videobox");
                     $("#"+idelm+"").parent().addClass("col-span-2");
                     $("#"+idelm+"").parent().addClass("row-span-2");
                   }));
@@ -410,8 +411,10 @@
         });
 
         $("#btncallend").click(function(){
-	  peer.disconnect();
-	  usersconnect = [];
+          // peer.destroy();
+          console.log("try to reconnecting");
+          peer.disconnect();
+          peer.reconnect();
         });
 
 
@@ -527,7 +530,7 @@
 
                     console.log("generate all new user :"+usersconnect.length);
                     console.log(data.userid);
-
+                    //create multiple users peer connection
                     usersconnect.forEach(function(item, index){
                         if(localId.value != item){
                             const call = peer.call(item, dataStream);
@@ -536,13 +539,13 @@
                                 console.log("generate element :");
                                 $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
                                   console.log("change position4");
-                                  $(".userstream").first().removeClass("videoboxhead");
+                                  $(".userstream").first().removeClass("videobox");
                                   $(".userstream").first().addClass("videobox");
                                   $(".userstream").first().parent().removeClass("col-span-2");
                                   $(".userstream").first().parent().removeClass("row-span-2");
                                   $("#"+idelm+"").parent().prependTo("#videostreambox");
                                   $("#"+idelm+"").removeClass("videobox");
-                                  $("#"+idelm+"").addClass("videoboxhead");
+                                  $("#"+idelm+"").addClass("videobox");
                                   $("#"+idelm+"").parent().addClass("col-span-2");
                                   $("#"+idelm+"").parent().addClass("row-span-2");
                                 }));
