@@ -263,6 +263,20 @@
             dataStream = stream;
             const localVideoStream = document.getElementById("localVideo");
             // Memutarkan aliran tunggal yang telah digabungkan
+            // Menambahkan media stream pengguna lain ke array mediaStreams
+            mediaStreams.push(stream);
+
+            // Menggabungkan semua media stream menjadi satu aliran tunggal
+            const mixedStream = new MediaStream();
+            mediaStreams.forEach((stream) => {
+              stream.getTracks().forEach((track) => {
+                mixedStream.addTrack(track);
+              });
+            });
+
+            // Memutarkan aliran tunggal yang telah digabungkan
+            mixedVideo.srcObject = mixedStream;
+            
             localVideoStream.srcObject = stream;
             localVideoStream.onloadedmetadata = () => localVideoStream.play();
 
