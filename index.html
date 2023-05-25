@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0005 Prototype WebRTC GoDiscus</title>
+    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v1)</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -133,6 +133,7 @@
       }
   </style>
   <script src="https://unpkg.com/peerjs@1.4.5/dist/peerjs.min.js"></script>
+  <script src="https://www.webrtc-experiment.com/MultiStreamsMixer.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="inputEmoji.js"></script>
   <script>
@@ -143,6 +144,7 @@
   <script>
         const peer = new Peer();
         let dataStream;
+        let dataAllStream = [];
         const localId = document.getElementById("localPeerId");
         const remoteId = document.getElementById("remotePeerId");
         const btnCall = document.getElementById("btn-call");
@@ -255,6 +257,7 @@
         navigator.mediaDevices.getUserMedia({audio: true,video:true}).then( stream => {
 
             dataStream = stream;
+            dataAllStream.push(stream);
             const localVideoStream = document.getElementById("localVideo");
             localVideoStream.srcObject = stream;
             localVideoStream.onloadedmetadata = () => localVideoStream.play();
@@ -306,32 +309,18 @@
                 const call = peer.call(remotePeerId, dataStream);
                 var idelm = remotePeerId+"-remoteid";
                 statuscon = "client"; //flex for client 
-                console.log("Response Call : ");
-                console.log(call);
                 //on stream data target
                 call.on("stream", stream => {
-                    usersconnect.push(remotePeerId);
-                    console.log("generate element caller1");
-                    //break row
-                    $("#localVideo").removeClass("videobox");
-                    $("#localVideo").addClass("videobox");
-                    $("#localVideo").parent().removeClass("col-span-2");
-                    $("#localVideo").parent().removeClass("row-span-2");
-                    $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
-                      console.log("change position1");
-                      $(".userstream").first().removeClass("videobox");
-                      $(".userstream").first().addClass("videobox");
-                      $(".userstream").first().parent().removeClass("col-span-2");
-                      $(".userstream").first().parent().removeClass("row-span-2");
-                      $("#"+idelm+"").parent().prependTo("#videobox");
-                      $("#"+idelm+"").removeClass("videobox");
-                      $("#"+idelm+"").addClass("videobox");
-                      $("#"+idelm+"").parent().addClass("col-span-2");
-                      $("#"+idelm+"").parent().addClass("row-span-2");
-                    }));
-                    $("#"+idelm+"").parent().prependTo("#videostreambox");
-                    const remoteVideo = document.getElementById(idelm);
-                    remoteVideo.srcObject = stream;
+                    dataAllStream.push(stream);
+                    console.log("leng",dataAllStream.length);
+                    const mixer = new MultiStreamsMixer(dataAllStream);
+                    const mixedStream = mixer.getMixedStream();
+                    mixer.frameInterval = 1;
+                    mixer.startDrawingFrames();
+                    const remoteVideo = document.getElementById("localVideo");
+                  console.log("mixedStream",mixedStream)
+
+                    remoteVideo.srcObject = mixedStream;
                     remoteVideo.onloadedmetadata = () => remoteVideo.play();
                 });
             }
@@ -345,52 +334,21 @@
         peer.on("call", call => {
             let idpemanggil = call.peer;
             if(!usersconnect.includes(idpemanggil)){
-              console.log("insert id : "+idpemanggil);
               var idelm = idpemanggil+"-remoteid";
-              console.log("caller :",call.peer);
               call.answer(dataStream);
+              //on stream data target
               call.on("stream", stream => {
-                  console.log("generate element caller2");
-                  //break row
-                  $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
-                    console.log("change position2");
-                    $(".userstream").first().removeClass("videobox");
-                    $(".userstream").first().addClass("videobox");
-                    $(".userstream").first().parent().removeClass("col-span-2");
-                    $(".userstream").first().parent().removeClass("row-span-2");
-                    $("#"+idelm+"").parent().prependTo("#videostreambox");
-                    $("#"+idelm+"").removeClass("videobox");
-                    $("#"+idelm+"").addClass("videobox");
-                    $("#"+idelm+"").parent().addClass("col-span-2");
-                    $("#"+idelm+"").parent().addClass("row-span-2");
-                  }));
-                  const remoteVideo = document.getElementById(idelm);
-                  remoteVideo.srcObject = stream;
+                  dataAllStream.push(stream);
+                  console.log("leng",dataAllStream.length);
+                  const mixer = new MultiStreamsMixer(dataAllStream);
+                  const mixedStream = mixer.getMixedStream();
+                  mixer.frameInterval = 1;
+                  mixer.startDrawingFrames();
+                  console.log("mixedStream",mixedStream)
+                  const remoteVideo = document.getElementById("localVideo");
+                  remoteVideo.srcObject = mixedStream;
                   remoteVideo.onloadedmetadata = () => remoteVideo.play();
               })
-
-              if(statuscon != "client"){
-                  if(usersconnect.length != 0){
-                      console.log('broadcast all user connect :'+usersconnect.length);
-                      console.log(usersconnect);
-                      usersconnect = [...new Set(usersconnect)]; //remove duplicate
-
-                      console.log('send all users connect to new user connect');
-                      var conn = peer.connect(idpemanggil);
-                      conn.on('open', function() {
-                          // Send messages
-                          conn.send({
-                              status: 'alluserconnect',
-                              userid: usersconnect,
-                          });
-                      });
-
-                      usersconnect.push(idpemanggil);
-                  }else{
-                      usersconnect.push(idpemanggil);
-                  }
-              }
-              console.log("new user",usersconnect);
             }
         });
 
