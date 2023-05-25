@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0007 (mixed media2) Prototype WebRTC GoDiscus</title>
+    <title>v0.0005 Prototype WebRTC GoDiscus</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -51,11 +51,6 @@
                     <div class="w-full overflow-hidden">
                         <video id="localVideo" class="userstream videobox rounded" muted></video>
                     </div>
-                </div>
-                <div class="grid-cols-2 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
-                  <div class="w-full overflow-hidden col-span-2 row-span-2">
-                        <video id="mixed-video" class="userstream videoboxhead rounded" muted autoplay></video>
-                  </div>
                 </div>
             </div>
           </div>
@@ -160,7 +155,6 @@
         var indexping = 0;
         var indexclose = [];
         let firstaudioopen = true;
-        const mediaStreams = []; // Array untuk menyimpan media stream pengguna
 
 
         //========================= CODE VOICE RECOGNITION (next feature speech to text)===================//
@@ -262,21 +256,6 @@
 
             dataStream = stream;
             const localVideoStream = document.getElementById("localVideo");
-            // Memutarkan aliran tunggal yang telah digabungkan
-            // Menambahkan media stream pengguna lain ke array mediaStreams
-            mediaStreams.push(stream);
-
-            // Menggabungkan semua media stream menjadi satu aliran tunggal
-            const mixedStream = new MediaStream();
-            mediaStreams.forEach((stream) => {
-              stream.getTracks().forEach((track) => {
-                mixedStream.addTrack(track);
-              });
-            });
-
-            // Memutarkan aliran tunggal yang telah digabungkan
-            mixedVideo.srcObject = mixedStream;
-
             localVideoStream.srcObject = stream;
             localVideoStream.onloadedmetadata = () => localVideoStream.play();
 
@@ -318,8 +297,6 @@
           gotoPeer()
         });
 
-        const mixedVideo = document.querySelector('#mixed-video');
-
         //create call
         const gotoPeer = () => {
           const remotePeerId = remoteId.value;
@@ -329,21 +306,33 @@
                 const call = peer.call(remotePeerId, dataStream);
                 var idelm = remotePeerId+"-remoteid";
                 statuscon = "client"; //flex for client 
-         
+                console.log("Response Call : ");
+                console.log(call);
                 //on stream data target
                 call.on("stream", stream => {
-                    // Menambahkan media stream pengguna lain ke array mediaStreams
-                    mediaStreams.push(stream);
-                    // Menggabungkan semua media stream menjadi satu aliran tunggal
-                    const mixedStream = new MediaStream();
-                    mediaStreams.forEach((stream) => {
-                      stream.getTracks().forEach((track) => {
-                        mixedStream.addTrack(track);
-                      });
-                    });
-
-                    // Memutarkan aliran tunggal yang telah digabungkan
-                    mixedVideo.srcObject = mixedStream;
+                    usersconnect.push(remotePeerId);
+                    console.log("generate element caller1");
+                    //break row
+                    $("#localVideo").removeClass("videobox");
+                    $("#localVideo").addClass("videobox");
+                    $("#localVideo").parent().removeClass("col-span-2");
+                    $("#localVideo").parent().removeClass("row-span-2");
+                    $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
+                      console.log("change position1");
+                      $(".userstream").first().removeClass("videobox");
+                      $(".userstream").first().addClass("videobox");
+                      $(".userstream").first().parent().removeClass("col-span-2");
+                      $(".userstream").first().parent().removeClass("row-span-2");
+                      $("#"+idelm+"").parent().prependTo("#videobox");
+                      $("#"+idelm+"").removeClass("videobox");
+                      $("#"+idelm+"").addClass("videobox");
+                      $("#"+idelm+"").parent().addClass("col-span-2");
+                      $("#"+idelm+"").parent().addClass("row-span-2");
+                    }));
+                    $("#"+idelm+"").parent().prependTo("#videostreambox");
+                    const remoteVideo = document.getElementById(idelm);
+                    remoteVideo.srcObject = stream;
+                    remoteVideo.onloadedmetadata = () => remoteVideo.play();
                 });
             }
         }
@@ -354,22 +343,55 @@
 
         //answer call
         peer.on("call", call => {
-          call.answer(dataStream);
-          call.on("stream", stream => {
-              // Menambahkan media stream pengguna lain ke array mediaStreams
-              mediaStreams.push(stream);
+            let idpemanggil = call.peer;
+            if(!usersconnect.includes(idpemanggil)){
+              console.log("insert id : "+idpemanggil);
+              var idelm = idpemanggil+"-remoteid";
+              console.log("caller :",call.peer);
+              call.answer(dataStream);
+              call.on("stream", stream => {
+                  console.log("generate element caller2");
+                  //break row
+                  $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
+                    console.log("change position2");
+                    $(".userstream").first().removeClass("videobox");
+                    $(".userstream").first().addClass("videobox");
+                    $(".userstream").first().parent().removeClass("col-span-2");
+                    $(".userstream").first().parent().removeClass("row-span-2");
+                    $("#"+idelm+"").parent().prependTo("#videostreambox");
+                    $("#"+idelm+"").removeClass("videobox");
+                    $("#"+idelm+"").addClass("videobox");
+                    $("#"+idelm+"").parent().addClass("col-span-2");
+                    $("#"+idelm+"").parent().addClass("row-span-2");
+                  }));
+                  const remoteVideo = document.getElementById(idelm);
+                  remoteVideo.srcObject = stream;
+                  remoteVideo.onloadedmetadata = () => remoteVideo.play();
+              })
 
-              // Menggabungkan semua media stream menjadi satu aliran tunggal
-              const mixedStream = new MediaStream();
-              mediaStreams.forEach((stream) => {
-                stream.getTracks().forEach((track) => {
-                  mixedStream.addTrack(track);
-                });
-              });
+              if(statuscon != "client"){
+                  if(usersconnect.length != 0){
+                      console.log('broadcast all user connect :'+usersconnect.length);
+                      console.log(usersconnect);
+                      usersconnect = [...new Set(usersconnect)]; //remove duplicate
 
-              // Memutarkan aliran tunggal yang telah digabungkan
-              mixedVideo.srcObject = mixedStream;
-          })
+                      console.log('send all users connect to new user connect');
+                      var conn = peer.connect(idpemanggil);
+                      conn.on('open', function() {
+                          // Send messages
+                          conn.send({
+                              status: 'alluserconnect',
+                              userid: usersconnect,
+                          });
+                      });
+
+                      usersconnect.push(idpemanggil);
+                  }else{
+                      usersconnect.push(idpemanggil);
+                  }
+              }
+              console.log("new user",usersconnect);
+            }
         });
 
         //========================== CODE CHAT =============================//
@@ -525,19 +547,7 @@
                                 }));
 
                                 const remoteVideo = document.getElementById(idelm);
-                                // Menambahkan media stream pengguna lain ke array mediaStreams
-                                mediaStreams.push(stream);
-
-                                // Menggabungkan semua media stream menjadi satu aliran tunggal
-                                const mixedStream = new MediaStream();
-                                mediaStreams.forEach((stream) => {
-                                  stream.getTracks().forEach((track) => {
-                                    mixedStream.addTrack(track);
-                                  });
-                                });
-
-                                // Memutarkan aliran tunggal yang telah digabungkan
-                                remoteVideo.srcObject = mixedStream;
+                                remoteVideo.srcObject = stream;
                                 remoteVideo.onloadedmetadata = () => remoteVideo.play();
                             });
 
