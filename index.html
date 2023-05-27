@@ -48,9 +48,9 @@
           <div class="md:col-span-3 pl-16">
             <div class="container mx-auto">
                 <div id="videostreambox" class="grid-cols-2 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
-                    <div class="w-full overflow-hidden">
-                        <video id="localVideo" class="userstream videobox rounded" muted></video>
-                    </div>
+                    <div class="w-full overflow-hidden col-span-2 row-span-2">
+                      <video id="localVideo" class="userstream rounded videoboxhead" muted=""></video>
+                  </div>
                 </div>
             </div>
           </div>
@@ -121,7 +121,6 @@
   <style>
       .videoboxhead {
           width:100%; 
-          height: 480px; 
           object-fit: cover;
       }
       .videobox {
@@ -300,7 +299,7 @@
           gotoPeer()
         });
 
-        //create call
+        //call
         const gotoPeer = () => {
           const remotePeerId = remoteId.value;
             if(remotePeerId == ""){
@@ -311,234 +310,250 @@
                 statuscon = "client"; //flex for client 
                 //on stream data target
                 call.on("stream", stream => {
-                    dataAllStream.push(stream);
-                    console.log("leng",dataAllStream.length);
-                    const mixer = new MultiStreamsMixer(dataAllStream);
-                    const mixedStream = mixer.getMixedStream();
-                    mixer.frameInterval = 1;
-                    mixer.startDrawingFrames();
                     const remoteVideo = document.getElementById("localVideo");
-                  console.log("mixedStream",mixedStream)
-
-                    remoteVideo.srcObject = mixedStream;
+                    remoteVideo.srcObject = stream;
                     remoteVideo.onloadedmetadata = () => remoteVideo.play();
                 });
             }
         }
 
-        $(document).ready(function(){
-          checkping();
-        });
-
-        //answer call
+        //answer
         peer.on("call", call => {
+            const remotePeerId = remoteId.value;
             let idpemanggil = call.peer;
             if(!usersconnect.includes(idpemanggil)){
               var idelm = idpemanggil+"-remoteid";
               call.answer(dataStream);
               //on stream data target
               call.on("stream", stream => {
-                  dataAllStream.push(stream);
-                  console.log("leng",dataAllStream.length);
-                  const mixer = new MultiStreamsMixer(dataAllStream);
-                  const mixedStream = mixer.getMixedStream();
-                  mixer.frameInterval = 1;
-                  mixer.startDrawingFrames();
-                  console.log("mixedStream",mixedStream)
+                if(remotePeerId == ""){
+                  console.log("check :",usersconnect.includes(call.peer));
+                  if(!usersconnect.includes(call.peer)){
+                    console.log("stream host");
+                    
+                    console.log("stream.width",stream.width);
+                    console.log("stream.height",stream.height);
+                   
+
+                    dataAllStream.push(stream);
+                    usersconnect.push(call.peer);
+                    const mixer = new MultiStreamsMixer(dataAllStream);
+                    const mixedStream = mixer.getMixedStream();
+                    mixer.frameInterval = 1;
+                    mixer.startDrawingFrames();
+                    reloadStream();
+                    dataStream = mixedStream;
+                    const remoteVideo = document.getElementById("localVideo");
+                    remoteVideo.srcObject = dataStream;
+                    remoteVideo.onloadedmetadata = () => remoteVideo.play();
+                  }
+                }else{
+                  console.log("stream client");
                   const remoteVideo = document.getElementById("localVideo");
-                  remoteVideo.srcObject = mixedStream;
+                  remoteVideo.srcObject = stream;
                   remoteVideo.onloadedmetadata = () => remoteVideo.play();
+                }
               })
             }
         });
 
-        //========================== CODE CHAT =============================//
 
-        kirimPesan.addEventListener("click", function(){
-          sendmassage();
-        });
-
-        $("#pesan").keydown(function(e){
-            if(e.which == 13){
-              sendmassage();
+        const reloadStream = () => {
+          setTimeout(()=>{
+            for (let peerId in peer.connections) {
+              const resCall = peer.call(peerId, dataStream);
+              console.log("reloadStream",resCall);
             }
-        });
-
-        $("#btncallend").click(function(){
-          // peer.destroy();
-          console.log("try to reconnecting");
-          peer.disconnect();
-          peer.reconnect();
-        });
-
-
-        sendmassage = () => {
-          let datapesan = pesanText.value;
-
-          if(datapesan.trim() !== ""){
-            let username = "Ahmad Sukron";
-            let userimage = "http://localhost:8080/imagesuploaded/1662042435_86f992efa42a574b0035.jpg";
-            console.log(usersconnect);
-            $("#massage-list").prepend('<div class="content-chat flex pb-3"><div class="avatar pr-3"><div class="w-7 h-7 rounded-full ring ring-primary"><img src="'+userimage+'" /></div></div><p class="text-chat text-xs"><span class="name-chat pr-1 text-sky-500">'+username+'</span> '+datapesan+'</p></div>');
-            usersconnect = [...new Set(usersconnect)]; //remove duplicate
-            usersconnect.forEach(function(item, index){
-                var conn = peer.connect(item);
-                const massage = {
-                    status : 'commentmassage',
-                    massage : btoa(encodeURIComponent(datapesan)),
-                    username : username,
-                    userimage : userimage,
-                };
-                // Send messages
-                console.log('try to send massage '.massage);
-                conn.on('open', function() {
-                    // Send messages
-                    conn.send(massage);
-                });
-            });
-            $("#pesan").val("");
-          }
+          }, 1000);
         }
 
-        const closepeerclient = (userclose) => {
-            var idusrclose = userclose+"-remoteid";
-            $("#"+idusrclose+"").parent().remove();
+        // //========================== CODE CHAT =============================//
 
-            //remove id user disconnect
-            const index = usersconnect.indexOf(userclose);
-            if (index > -1) { // only splice array when item is found
-              usersconnect.splice(index, 1); // 2nd parameter means remove one item only
-            }
-            usersconnect.forEach(function(item, index){
-                if(localId.value != item){
-                    var conn = peer.connect(item);
-                    const massage = {
-                        status  : 'getallnewusers',
-                        users   : usersconnect,
-                    };
-                    // Send messages
-                    console.log('broadcast all user ');
-                    console.log(usersconnect);
+        // kirimPesan.addEventListener("click", function(){
+        //   sendmassage();
+        // });
 
-                    conn.on('open', function() {
-                        // Send messages
-                        conn.send(massage);
-                    });
-                }
-            });
-        }
+        // $("#pesan").keydown(function(e){
+        //     if(e.which == 13){
+        //       sendmassage();
+        //     }
+        // });
 
-        let disconnectcount = 0;
-        async function checkping(){
-          setInterval(async function () {
-            console.log("ping connection");
-            if(usersconnect.length > 0 && remoteId.value != ""){
-              //create data connection
-              var conn = await peer.connect(remoteId.value);
-              // filtering id is connected, if id is not connected remove after last iteration (index 0) 
-              conn.peerConnection.onconnectionstatechange = async () => {
-                if (!conn) return;
-                const state = await conn.peerConnection.connectionState;
-                console.log(`id:${conn.peer}`);
-                console.log(`connectionStateChanged22:${state}`);
-                if(state == "disconnected" || state == "failed"){
-                  if(disconnectcount == 3){
-                    gotoPeer();
-                  }else{
-                    disconnectcount++;
-                    console.log("disconnectcount : "+disconnectcount);
-                  }
-                }else{
-                  disconnectcount = 0;
-                }
-              };
-            }
-          }, 5000);
-        }
+        // $("#btncallend").click(function(){
+        //   // peer.destroy();
+        //   console.log("try to reconnecting");
+        //   peer.disconnect();
+        //   peer.reconnect();
+        // });
 
-        peer.on('error', function(err){
-          console.log(err);
-        });
 
-        //kode untuk menerima pesan
-        peer.on('connection', async function(con){
-            let statechange = await con.peerConnection.connectionState
-            let stateopen = await con._open
-            console.log("this connection ",con);
-            console.log("status user ",con.peer);
-            console.log("status open ",stateopen);
-            console.log("status connectionState ",statechange);
+        // sendmassage = () => {
+        //   let datapesan = pesanText.value;
 
-            con.on('data', function(data){
-                console.log('Incoming data is :');
-                console.log(data);
-                console.log("con user",con.peer);
+        //   if(datapesan.trim() !== ""){
+        //     let username = "Ahmad Sukron";
+        //     let userimage = "http://localhost:8080/imagesuploaded/1662042435_86f992efa42a574b0035.jpg";
+        //     console.log(usersconnect);
+        //     $("#massage-list").prepend('<div class="content-chat flex pb-3"><div class="avatar pr-3"><div class="w-7 h-7 rounded-full ring ring-primary"><img src="'+userimage+'" /></div></div><p class="text-chat text-xs"><span class="name-chat pr-1 text-sky-500">'+username+'</span> '+datapesan+'</p></div>');
+        //     usersconnect = [...new Set(usersconnect)]; //remove duplicate
+        //     usersconnect.forEach(function(item, index){
+        //         var conn = peer.connect(item);
+        //         const massage = {
+        //             status : 'commentmassage',
+        //             massage : btoa(encodeURIComponent(datapesan)),
+        //             username : username,
+        //             userimage : userimage,
+        //         };
+        //         // Send messages
+        //         console.log('try to send massage '.massage);
+        //         conn.on('open', function() {
+        //             // Send messages
+        //             conn.send(massage);
+        //         });
+        //     });
+        //     $("#pesan").val("");
+        //   }
+        // }
+
+        // const closepeerclient = (userclose) => {
+        //     var idusrclose = userclose+"-remoteid";
+        //     $("#"+idusrclose+"").parent().remove();
+
+        //     //remove id user disconnect
+        //     const index = usersconnect.indexOf(userclose);
+        //     if (index > -1) { // only splice array when item is found
+        //       usersconnect.splice(index, 1); // 2nd parameter means remove one item only
+        //     }
+        //     usersconnect.forEach(function(item, index){
+        //         if(localId.value != item){
+        //             var conn = peer.connect(item);
+        //             const massage = {
+        //                 status  : 'getallnewusers',
+        //                 users   : usersconnect,
+        //             };
+        //             // Send messages
+        //             console.log('broadcast all user ');
+        //             console.log(usersconnect);
+
+        //             conn.on('open', function() {
+        //                 // Send messages
+        //                 conn.send(massage);
+        //             });
+        //         }
+        //     });
+        // }
+
+        // let disconnectcount = 0;
+        // async function checkping(){
+        //   setInterval(async function () {
+        //     console.log("ping connection");
+        //     if(usersconnect.length > 0 && remoteId.value != ""){
+        //       //create data connection
+        //       var conn = await peer.connect(remoteId.value);
+        //       // filtering id is connected, if id is not connected remove after last iteration (index 0) 
+        //       conn.peerConnection.onconnectionstatechange = async () => {
+        //         if (!conn) return;
+        //         const state = await conn.peerConnection.connectionState;
+        //         console.log(`id:${conn.peer}`);
+        //         console.log(`connectionStateChanged22:${state}`);
+        //         if(state == "disconnected" || state == "failed"){
+        //           if(disconnectcount == 3){
+        //             gotoPeer();
+        //           }else{
+        //             disconnectcount++;
+        //             console.log("disconnectcount : "+disconnectcount);
+        //           }
+        //         }else{
+        //           disconnectcount = 0;
+        //         }
+        //       };
+        //     }
+        //   }, 5000);
+        // }
+
+        // peer.on('error', function(err){
+        //   console.log(err);
+        // });
+
+        // //kode untuk menerima pesan
+        // peer.on('connection', async function(con){
+        //     let statechange = await con.peerConnection.connectionState
+        //     let stateopen = await con._open
+        //     console.log("this connection ",con);
+        //     console.log("status user ",con.peer);
+        //     console.log("status open ",stateopen);
+        //     console.log("status connectionState ",statechange);
+
+        //     con.on('data', function(data){
+        //         console.log('Incoming data is :');
+        //         console.log(data);
+        //         console.log("con user",con.peer);
                 
-                if(data.status == "broadcast"){
-                    usersconnect.push(con.peer);
-                    console.log('user incomming : '+con.peer);
-                }else if (data.status == "alluserconnect"){
-                    usersconnect = data.userid;
-                    usersconnect.push(con.peer);
-                    usersconnect = [...new Set(usersconnect)]; //remove duplicate
+        //         if(data.status == "broadcast"){
+        //             usersconnect.push(con.peer);
+        //             console.log('user incomming : '+con.peer);
+        //         }else if (data.status == "alluserconnect"){
+        //             usersconnect = data.userid;
+        //             usersconnect.push(con.peer);
+        //             usersconnect = [...new Set(usersconnect)]; //remove duplicate
 
-                    console.log("generate all new user :"+usersconnect.length);
-                    console.log(data.userid);
-                    //create multiple users peer connection
-                    usersconnect.forEach(function(item, index){
-                        if(localId.value != item){
-                            const call = peer.call(item, dataStream);
-                            var idelm = item+"-remoteid";
-                            call.on("stream", stream => {
-                                console.log("generate element :");
-                                $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
-                                  console.log("change position4");
-                                  $(".userstream").first().removeClass("videobox");
-                                  $(".userstream").first().addClass("videobox");
-                                  $(".userstream").first().parent().removeClass("col-span-2");
-                                  $(".userstream").first().parent().removeClass("row-span-2");
-                                  $("#"+idelm+"").parent().prependTo("#videostreambox");
-                                  $("#"+idelm+"").removeClass("videobox");
-                                  $("#"+idelm+"").addClass("videobox");
-                                  $("#"+idelm+"").parent().addClass("col-span-2");
-                                  $("#"+idelm+"").parent().addClass("row-span-2");
-                                }));
+        //             console.log("generate all new user :"+usersconnect.length);
+        //             console.log(data.userid);
+        //             //create multiple users peer connection
+        //             usersconnect.forEach(function(item, index){
+        //                 if(localId.value != item){
+        //                     const call = peer.call(item, dataStream);
+        //                     var idelm = item+"-remoteid";
+        //                     call.on("stream", stream => {
+        //                         console.log("generate element :");
+        //                         $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
+        //                           console.log("change position4");
+        //                           $(".userstream").first().removeClass("videobox");
+        //                           $(".userstream").first().addClass("videobox");
+        //                           $(".userstream").first().parent().removeClass("col-span-2");
+        //                           $(".userstream").first().parent().removeClass("row-span-2");
+        //                           $("#"+idelm+"").parent().prependTo("#videostreambox");
+        //                           $("#"+idelm+"").removeClass("videobox");
+        //                           $("#"+idelm+"").addClass("videobox");
+        //                           $("#"+idelm+"").parent().addClass("col-span-2");
+        //                           $("#"+idelm+"").parent().addClass("row-span-2");
+        //                         }));
 
-                                const remoteVideo = document.getElementById(idelm);
-                                remoteVideo.srcObject = stream;
-                                remoteVideo.onloadedmetadata = () => remoteVideo.play();
-                            });
+        //                         const remoteVideo = document.getElementById(idelm);
+        //                         remoteVideo.srcObject = stream;
+        //                         remoteVideo.onloadedmetadata = () => remoteVideo.play();
+        //                     });
 
-                            var conn = peer.connect(item);
-                            const massage = {
-                                status  : 'getallnewusers',
-                                users   : usersconnect,
-                            };
-                            // Send messages
-                            console.log('broadcast all user ');
-                            console.log(usersconnect);
+        //                     var conn = peer.connect(item);
+        //                     const massage = {
+        //                         status  : 'getallnewusers',
+        //                         users   : usersconnect,
+        //                     };
+        //                     // Send messages
+        //                     console.log('broadcast all user ');
+        //                     console.log(usersconnect);
 
-                            conn.on('open', function() {
-                                // Send messages
-                                conn.send(massage);
-                            });
-                        }
-                    });
+        //                     conn.on('open', function() {
+        //                         // Send messages
+        //                         conn.send(massage);
+        //                     });
+        //                 }
+        //             });
                     
-                }else if(data.status == "commentmassage"){
-                    console.log("generate massage")
-                    console.log(data)
-                    console.log(usersconnect)
-                    massagetext = decodeURIComponent(window.atob(data.massage));
-                    console.log("massagetext",massagetext)
+        //         }else if(data.status == "commentmassage"){
+        //             console.log("generate massage")
+        //             console.log(data)
+        //             console.log(usersconnect)
+        //             massagetext = decodeURIComponent(window.atob(data.massage));
+        //             console.log("massagetext",massagetext)
 
-                    $("#massage-list").prepend('<div class="content-chat flex pb-3"><div class="avatar pr-3"><div class="w-7 h-7 rounded-full ring ring-primary"><img src="'+data.userimage+'" /></div></div><p class="text-chat text-xs"><span class="name-chat pr-1 text-sky-500">'+data.username+'</span> '+massagetext+'</p></div>');
-                }else if(data.status == "getallnewusers"){
-                    usersconnect = data.users;
-                }
+        //             $("#massage-list").prepend('<div class="content-chat flex pb-3"><div class="avatar pr-3"><div class="w-7 h-7 rounded-full ring ring-primary"><img src="'+data.userimage+'" /></div></div><p class="text-chat text-xs"><span class="name-chat pr-1 text-sky-500">'+data.username+'</span> '+massagetext+'</p></div>');
+        //         }else if(data.status == "getallnewusers"){
+        //             usersconnect = data.users;
+        //         }
                 
-            });
-            console.log("new user",usersconnect);
-        });
+        //     });
+        //     console.log("new user",usersconnect);
+        // });
     </script>
 </html>
