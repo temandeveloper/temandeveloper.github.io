@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v1)</title>
+    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v2)</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -49,7 +49,7 @@
             <div class="container mx-auto">
                 <div id="videostreambox" class="grid-cols-2 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
                     <div class="w-full overflow-hidden col-span-2 row-span-2">
-                      <video id="localVideo" class="userstream rounded videoboxhead" muted=""></video>
+                      <video id="localVideo" class="userstream rounded videoboxhead"></video>
                   </div>
                 </div>
             </div>
@@ -253,31 +253,36 @@
 
         //========================== CODE STREAM =============================//
 
-        navigator.mediaDevices.getUserMedia({audio: true,video:true}).then( stream => {
-
-            dataStream = stream;
-            dataAllStream.push(stream);
-            const localVideoStream = document.getElementById("localVideo");
-            localVideoStream.srcObject = stream;
-            localVideoStream.onloadedmetadata = () => localVideoStream.play();
-
-            $("#camact").click(function(){
-                stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
-            });
-
-            $("#audioact").click(function(){
-                // if(firstaudioopen){
-                //   cameraSharing();
-                // }else{
-                  stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-                // }
-            });
-
-        });
+        
 
         //this code is similarity of document ready on javascript
         peer.on("open", id => {
             localId.value = id;
+            navigator.mediaDevices.getUserMedia({audio: true,video:true}).then( stream => {
+              dataStream = stream;
+
+              dataAllStream.push({
+                id : localId.value,
+                stream : stream,
+              });
+
+              const localVideoStream = document.getElementById("localVideo");
+              localVideoStream.srcObject = stream;
+              localVideoStream.onloadedmetadata = () => localVideoStream.play();
+
+              $("#camact").click(function(){
+                  stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
+              });
+
+              $("#audioact").click(function(){
+                  // if(firstaudioopen){
+                  //   cameraSharing();
+                  // }else{
+                    stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
+                  // }
+              });
+
+            });
         });
 
 
@@ -325,19 +330,21 @@
               var idelm = idpemanggil+"-remoteid";
               call.answer(dataStream);
               //on stream data target
-              call.on("stream", stream => {
+              call.on("stream", async stream => {
                 if(remotePeerId == ""){
                   console.log("check :",usersconnect.includes(call.peer));
                   if(!usersconnect.includes(call.peer)){
-                    console.log("stream host");
+                    console.log("stream stream from",stream);
                     
-                    console.log("stream.width",stream.width);
-                    console.log("stream.height",stream.height);
-                   
-
-                    dataAllStream.push(stream);
+                    dataAllStream.push({
+                      id : call.peer,
+                      stream : stream,
+                    });
+                    
                     usersconnect.push(call.peer);
-                    const mixer = new MultiStreamsMixer(dataAllStream);
+                    srcStream = await generateStreamData(dataAllStream,localId.value)
+                    console.log("srcStream",dataAllStream,srcStream);
+                    const mixer = new MultiStreamsMixer(srcStream);
                     const mixedStream = mixer.getMixedStream();
                     mixer.frameInterval = 1;
                     mixer.startDrawingFrames();
@@ -366,6 +373,30 @@
             }
           }, 1000);
         }
+
+        const generateStreamData = (dataAllStream = [], peerId) => dataAllStream.map(item => {
+          var newitem = item
+          console.log(item.stream);
+          if (item.id == peerId) {
+            newitem.stream.getVideoTracks()[0].enabled = false
+          }
+          return newitem.stream
+        })
+
+        // {
+        //     var allStream = [];
+
+        //     for (let index = 0; index < dataAllStream.length; index++) {
+        //         if(dataAllStream[index].id == peerId){
+        //             let thisstream = dataAllStream[index].stream.getVideoTracks()[0].enabled = false;
+        //             allStream.push(thisstream);
+        //         }else{
+        //             allStream.push(dataAllStream[index].stream);
+        //         }
+        //     }
+
+        //     return allStream
+        // }
 
         // //========================== CODE CHAT =============================//
 
