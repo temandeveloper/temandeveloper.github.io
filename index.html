@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v2)</title>
+    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v3)</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -343,15 +343,9 @@
                     
                     usersconnect.push(call.peer);
                     srcStream = await generateStreamData(dataAllStream,localId.value)
-                    console.log("srcStream",dataAllStream,srcStream);
-                    const mixer = new MultiStreamsMixer(srcStream);
-                    const mixedStream = mixer.getMixedStream();
-                    mixer.frameInterval = 1;
-                    mixer.startDrawingFrames();
                     reloadStream();
-                    dataStream = mixedStream;
                     const remoteVideo = document.getElementById("localVideo");
-                    remoteVideo.srcObject = dataStream;
+                    remoteVideo.srcObject = srcStream;
                     remoteVideo.onloadedmetadata = () => remoteVideo.play();
                   }
                 }else{
@@ -366,37 +360,43 @@
 
 
         const reloadStream = () => {
-          setTimeout(()=>{
+          console.log("Start reloadStream");
+          setTimeout(async ()=>{
             for (let peerId in peer.connections) {
-              const resCall = peer.call(peerId, dataStream);
+              srcStream = await generateStreamData(dataAllStream,peerId)
+              const resCall = peer.call(peerId, srcStream);
               console.log("reloadStream",resCall);
             }
           }, 1000);
         }
 
-        const generateStreamData = (dataAllStream = [], peerId) => dataAllStream.map(item => {
-          var newitem = item
-          console.log(item.stream);
-          if (item.id == peerId) {
-            newitem.stream.getVideoTracks()[0].enabled = false
-          }
-          return newitem.stream
-        })
+        const generateStreamData = async (dataAllStream, peerId) => {
+            console.log("Start Generate", peerId);
+            const allStream = await dataAllStream.map(item => {
+                if(item.id == peerId){
+                    console.log("update peerId", peerId);
+                    item.stream.getAudioTracks()[0].enabled = false;
+                }else{
+                    item.stream.getAudioTracks()[0].enabled = true;
+                }
+                return item.stream;
+            });
 
-        // {
-        //     var allStream = [];
+            console.log("update allStream", allStream);
+            console.log("update audio 1", allStream[0].getAudioTracks()[0].enabled);
+            console.log("update audio 2", allStream[1].getAudioTracks()[0].enabled);
 
-        //     for (let index = 0; index < dataAllStream.length; index++) {
-        //         if(dataAllStream[index].id == peerId){
-        //             let thisstream = dataAllStream[index].stream.getVideoTracks()[0].enabled = false;
-        //             allStream.push(thisstream);
-        //         }else{
-        //             allStream.push(dataAllStream[index].stream);
-        //         }
-        //     }
+            const mixer = new MultiStreamsMixer(allStream);
+            const mixedStream = mixer.getMixedStream();
+            mixer.frameInterval = 1;
+            mixer.startDrawingFrames();
+            return mixedStream
+        }
 
-        //     return allStream
-        // }
+
+        dataAllStream
+
+        allStream = dataAllStream + 1;
 
         // //========================== CODE CHAT =============================//
 
