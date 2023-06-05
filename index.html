@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v3)</title>
+    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v4)</title>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -259,6 +259,16 @@
         peer.on("open", id => {
             localId.value = id;
             navigator.mediaDevices.getUserMedia({audio: true,video:true}).then( stream => {
+              stream.getAudioTracks()[0].enabled = true;
+
+              // set noiseSuppression dan echoCancellation
+              if (stream.getAudioTracks()[0] && stream.getAudioTracks()[0].getSettings().echoCancellation !== undefined) {
+                  const constraints = stream.getAudioTracks()[0].getConstraints();
+                  constraints.echoCancellation = true;
+                  constraints.noiseSuppression = true;
+                  stream.getAudioTracks()[0].applyConstraints(constraints);
+              }
+
               dataStream = stream;
 
               dataAllStream.push({
@@ -275,11 +285,7 @@
               });
 
               $("#audioact").click(function(){
-                  // if(firstaudioopen){
-                  //   cameraSharing();
-                  // }else{
-                    stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-                  // }
+                  stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
               });
 
             });
@@ -363,7 +369,7 @@
           console.log("Start reloadStream");
           setTimeout(async ()=>{
             for (let peerId in peer.connections) {
-              srcStream = await generateStreamData(dataAllStream,peerId)
+              srcStream = await generateStreamData(dataAllStream,peerId,2)
               const resCall = peer.call(peerId, srcStream);
               console.log("reloadStream",resCall);
             }
@@ -373,30 +379,21 @@
         const generateStreamData = async (dataAllStream, peerId) => {
             console.log("Start Generate", peerId);
             const allStream = await dataAllStream.map(item => {
-                if(item.id == peerId){
-                    console.log("update peerId", peerId);
-                    item.stream.getAudioTracks()[0].enabled = false;
-                }else{
-                    item.stream.getAudioTracks()[0].enabled = true;
+                if(item.id != peerId){
+                    console.log("allStream", peerId);
+                    return item.stream;
                 }
-                return item.stream;
+            }).filter(item => {
+                return item != null; 
             });
 
-            console.log("update allStream", allStream);
-            console.log("update audio 1", allStream[0].getAudioTracks()[0].enabled);
-            console.log("update audio 2", allStream[1].getAudioTracks()[0].enabled);
-
+            console.log("allStream",allStream);
             const mixer = new MultiStreamsMixer(allStream);
             const mixedStream = mixer.getMixedStream();
             mixer.frameInterval = 1;
             mixer.startDrawingFrames();
             return mixedStream
         }
-
-
-        dataAllStream
-
-        allStream = dataAllStream + 1;
 
         // //========================== CODE CHAT =============================//
 
