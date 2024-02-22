@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>testv2</title>
+    <title>testv3</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 </head>
 
@@ -51,6 +51,12 @@
         });
 
         fileInput.addEventListener('change', (event) => {
+            console.log("send pesan",target)
+            const conn = peer.connect(target);
+            conn.on("open", () => {
+                conn.send("hallo gayuh!");
+            });
+
             const file = event.target.files[0];
             console.log(file)
             // Create a Blob from the file
