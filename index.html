@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>test send data</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 </head>
 
@@ -29,11 +29,20 @@
         const progressBar   = document.getElementById('progress-bar'); // Add this line
         const idpeer        = document.getElementById('idpeer');
         var url             = new URL(window.location.href);
-        var id              = url.searchParams.get("id");
         var target          = url.searchParams.get("target");
-        var peer            = new Peer(id);
+        var peer            = new Peer();
         const CHUNK_SIZE    = 1048576; // Define CHUNK_SIZE here
         let receivedChunks  = []; // Add this line
+
+        console.log("target",target)
+
+        peer.on('open', (id) => {
+            console.log('My ID:', id);
+        });
+
+        peer.on('error', function(err) {
+            console.log("error",err)
+        });
 
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
