@@ -1,587 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
+
+<head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="<?= $metadesc ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v0.0005 Prototype WebRTC GoDiscus (media mixer v4)</title>
-    <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <style>
-      .custom-scroll::-webkit-scrollbar {
-          width: 4px;
-          cursor: pointer;
-          border-radius: 4px;
-      }
-      .custom-scroll::-webkit-scrollbar-track {
-          background-color: rgba(229, 231, 235, var(--bg-opacity));
-          cursor: pointer;
-          border-radius: 4px;
-      }
-      .custom-scroll::-webkit-scrollbar-thumb {
-          cursor: pointer;
-          background-color: rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
-      }
-      .tox-tinymce {
-          border: 0 !important;
-      }
-  </style>
-  <body style="background-color: #2c254a;">
-    <div style="position: fixed; z-index: 1000;">
-      <div class="form-control">
-        <label class="input-group input-group-sm">
-          <span style="border-radius: 0;">{Dev Mode} Invitation Id :</span>
-          <input type="text" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" name="localPeerId" id="localPeerId" readonly class="input input-bordered input-sm w-96" />
-          <input type="text" placeholder="Invitation Connect" aria-label="Invitation Connect" aria-describedby="button-addon2"  name="remotePeerId" id="remotePeerId" class="input input-bordered input-sm w-96" />
-          <button class="btn btn-sm" type="button" id="btn-call">Connect</button>
-        </label>
-      </div>
-    </div>
-    <div class="drawer drawer-mobile">
-      <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
-      <div class="drawer-content custom-scroll">
-        <div class="md:grid md:grid-cols-4 relative">
-          <div class="md:col-span-3 pl-16">
-            <div class="container mx-auto">
-                <div id="videostreambox" class="grid-cols-2 p-14 space-y-2 lg:space-y-0 lg:grid lg:gap-x-3">
-                    <div class="w-full overflow-hidden col-span-2 row-span-2">
-                      <video id="localVideo" class="userstream rounded videoboxhead"></video>
-                  </div>
-                </div>
-            </div>
-          </div>
-          <div class="md:col-span-1" style="background-color: #272042;">
-            <div class="flex relative">
-              <div style="flex-basis: 85%;">
-                <div class="fixed h-full" style="width: 21%;">
-                  <div id="massage-list" class="massage-section overflow-y-auto custom-scroll h-4/5	pl-4 flex flex-col-reverse text-white">
-                      <!-- content chat -->
-                  </div>
-                  <div class="input-section h-1/5	">
-                      <input type="text" placeholder="Type a Message" style="background-color: #393262;" class="mt-1 mb-2 outline-0 p-3 block w-full rounded-none border-0 text-white text-xs componen-input-chat inputemo" name="pesan"  id="pesan"/>
-                      <button class="btn btn-sm btn-primary w-16 float-right" type="button" id="send-massage"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
-                  </div>
-                </div>
-              </div>
-              <div style="flex-basis: 15%;">
-                <div class="pt-14 overflow-y-auto fixed flex-none	 w-full p-3 h-full" style="background-color: #1e1832;">
-                  <ul>
-                    <li class="pt-1">
-                      <div class="avatar">
-                        <div class="w-8 rounded-full ring ring-primary">
-                          <img src="https://placeimg.com/192/192/people" />
-                        </div>
-                      </div>
-                    </li>
-                    <li class="pt-1">
-                      <div class="avatar">
-                        <div class="w-8 rounded-full ring ring-primary">
-                          <img src="https://placeimg.com/192/192/people" />
-                        </div>
-                      </div>
-                    </li>
-                    <li class="pt-1">
-                      <div class="avatar">
-                        <div class="w-8 rounded-full ring ring-primary">
-                          <img src="https://placeimg.com/192/192/people" />
-                        </div>
-                      </div>
-                    </li>
-                    <li class="pt-1">
-                      <div class="avatar">
-                        <div class="w-8 rounded-full ring ring-primary">
-                          <img src="https://placeimg.com/192/192/people" />
-                        </div>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+    <title>testv3</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+</head>
+
+<body>
+    <label id="idpeer"></label>
+    <label for="file-input">Select a file:</label>
+    <input type="file" id="file-input" name="file-input">
+    <div class="container">
+        <h2>Basic Progress Bar</h2>
+        <div class="progress">
+          <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+            <span class="sr-only">70% Complete</span>
           </div>
         </div>
-      </div> 
-      <div class="drawer-side">
-        <label for="my-drawer-2" class="drawer-overlay"></label> 
-        <div class="p-4 pt-14 overflow-y-auto w-24 h-full text-base-content fixed">
-          <ul class="menu menu-vertical rounded " style="background-color: #393262;">
-            <li><button type="button" id="btncallend" class="text-purple-sp hover:text-white"><i class=" relative p-1 text-xl fa-solid fa-house-chimney"></i></button></li>
-            <li><button type="button" id="audioact" class="text-purple-sp hover:text-white"><i class=" p-1 text-xl fa fa-microphone relative left-1"></i></button></li>
-            <li><button type="button" id="camact" class="text-purple-sp hover:text-white"><i class=" p-1 text-xl fa-solid fa-video"></i></button></li>
-            <li><button type="button" id="sharescreen" class="text-purple-sp hover:text-white"><i class=" p-1 text-xl fa-solid fa-display"></i></button></li>
-          </ul>
-        </div>
       </div>
-    </div>
-  </body>
-  <style>
-      .videoboxhead {
-          width:100%; 
-          object-fit: cover;
-      }
-      .videobox {
-          margin-bottom: 20px;
-          width:100%; 
-          height:268px; 
-          object-fit: cover;
-          position: relative;
-      }
-  </style>
-  <script src="https://unpkg.com/peerjs@1.4.5/dist/peerjs.min.js"></script>
-  <script src="https://www.webrtc-experiment.com/MultiStreamsMixer.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="inputEmoji.js"></script>
-  <script>
-    $(function () {
-      $('.inputemo').emoji({place: 'after'});
-    })
-  </script>
-  <script>
-        const peer = new Peer();
-        let dataStream;
-        let dataAllStream = [];
-        const localId = document.getElementById("localPeerId");
-        const remoteId = document.getElementById("remotePeerId");
-        const btnCall = document.getElementById("btn-call");
-        const kirimPesan = document.getElementById("send-massage");
-        const pesanText = document.getElementById("pesan");
-        const speechcode = document.getElementById("speechcode");
-        let usersconnect = [];
-        let statuscon = "";
-        let userclose = "";
-        var indexping = 0;
-        var indexclose = [];
-        let firstaudioopen = true;
-
-
-        //========================= CODE VOICE RECOGNITION (next feature speech to text)===================//
-
-        // window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        // const recognition = new SpeechRecognition();
-        // recognition.lang = "ja";
-        // recognition.interimResults = true;
-        // recognition.addEventListener("result", (e) => {
-        //     const text = Array.from(e.results).map((result) => result[0]).map((result) => result.transcript).join("");
-        //     console.log("Recognition Processing");
-        //     console.log("Fadil : "+text);
-        //     if (e.results[0].isFinal) {
-        //         console.log(text);
-        //         console.log(usersconnect);
-        //         usersconnect.forEach(function(item, index){
-        //             var conn = peer.connect(item);
-        //             // Send messages
-        //             console.log('try to send massage');
-        //             conn.on('open', function() {
-        //                 // Send messages
-        //                 conn.send(item+" : "+text);
-        //             });
-        //         });
-        //     }
-        // });
-
-        // recognition.addEventListener("end", () => {
-        //     recognition.start();
-        // });
-        // recognition.start();
-
-
-        //========================== Code screen capture =====================//
-
-
-
-        $("#sharescreen").click(async function(){
-            screenSharing();
-        });
-
-        async function screenSharing() {
-            await navigator.mediaDevices.getDisplayMedia({aspectRatio: {ideal: 1}}).then(stream => {
-                const localVideoStream = document.getElementById("localVideo");
-                localVideoStream.srcObject = stream;
-                localVideoStream.onloadedmetadata = () => localVideoStream.play();
-                
-                usersconnect = [...new Set(usersconnect)]; //remove duplicate
-                for (let key of usersconnect) {
-                  console.log(peer._connections.get(key)[0].peerConnection);
-                  console.log(peer._connections.get(key)[0].peerConnection.getSenders()[0]);
-                  console.log(stream);
-                  console.log(stream.getTracks()[0]);
-                  peer._connections.get(key)[0].peerConnection.getSenders()[0].replaceTrack(stream.getTracks()[0])
-                }
-
-                stream.getTracks()[0].addEventListener('ended', () => {
-                    //perform your task here
-                    console.log("stop screen share");
-                    cameraSharing();
-                });
-            })
-        }
-
-        async function cameraSharing() {
-            await navigator.mediaDevices.getUserMedia({audio: { echoCancellation: true,noiseSuppression: true }, video: true}).then( stream => {
-                dataStream = stream;
-                const localVideoStream = document.getElementById("localVideo");
-                localVideoStream.srcObject = stream;
-                localVideoStream.onloadedmetadata = () => localVideoStream.play();
-                firstaudioopen = false;
-
-                stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-
-                usersconnect = [...new Set(usersconnect)]; //remove duplicate
-                for (let key of usersconnect) {
-                  console.log(peer._connections.get(key)[0].peerConnection);
-                  console.log(peer._connections.get(key)[0].peerConnection.getSenders()[0]);
-                  console.log(stream);
-                  console.log(stream.getTracks()[0]);
-                  peer._connections.get(key)[0].peerConnection.getSenders()[0].replaceTrack(stream.getTracks()[0])
-                }
-
-                $("#camact").click(function(){
-                    stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
-                });
-
-                $("#audioact").click(async function(){
-                    stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-                });
-
-            });
-        }
-
-
-        //========================== CODE STREAM =============================//
-
-        
-
-        //this code is similarity of document ready on javascript
-        peer.on("open", id => {
-            localId.value = id;
-            navigator.mediaDevices.getUserMedia({audio: true,video:true}).then( stream => {
-              stream.getAudioTracks()[0].enabled = true;
-
-              // set noiseSuppression dan echoCancellation
-              if (stream.getAudioTracks()[0] && stream.getAudioTracks()[0].getSettings().echoCancellation !== undefined) {
-                  const constraints = stream.getAudioTracks()[0].getConstraints();
-                  constraints.echoCancellation = true;
-                  constraints.noiseSuppression = true;
-                  stream.getAudioTracks()[0].applyConstraints(constraints);
-              }
-
-              dataStream = stream;
-
-              dataAllStream.push({
-                id : localId.value,
-                stream : stream,
-              });
-
-              const localVideoStream = document.getElementById("localVideo");
-              localVideoStream.srcObject = stream;
-              localVideoStream.onloadedmetadata = () => localVideoStream.play();
-
-              $("#camact").click(function(){
-                  stream.getVideoTracks()[0].enabled = !stream.getVideoTracks()[0].enabled;
-              });
-
-              $("#audioact").click(function(){
-                  stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-              });
-
-            });
-        });
-
-
-        $("#videostreambox .userstream").on("click",function(){
-          console.log("change position2");
-          $(".userstream").first().removeClass("videoboxhead");
-          $(".userstream").first().addClass("videobox");
-          $(".userstream").first().parent().removeClass("col-span-2");
-          $(".userstream").first().parent().removeClass("row-span-2");
-          $(this).parent().prependTo("#videostreambox");
-          $(this).removeClass("videobox");
-          $(this).addClass("videoboxhead");
-          $(this).parent().addClass("col-span-2");
-          $(this).parent().addClass("row-span-2");
-        });
-
-
-        btnCall.addEventListener("click", function(){
-          gotoPeer()
-        });
-
-        //call
-        const gotoPeer = () => {
-          const remotePeerId = remoteId.value;
-            if(remotePeerId == ""){
-                alert("Silahkan masukkan invitation id terlebih dahulu");
-            }else{
-                const call = peer.call(remotePeerId, dataStream);
-                var idelm = remotePeerId+"-remoteid";
-                statuscon = "client"; //flex for client 
-                //on stream data target
-                call.on("stream", stream => {
-                    const remoteVideo = document.getElementById("localVideo");
-                    remoteVideo.srcObject = stream;
-                    remoteVideo.onloadedmetadata = () => remoteVideo.play();
-                });
-            }
-        }
-
-        //answer
-        peer.on("call", call => {
-            const remotePeerId = remoteId.value;
-            let idpemanggil = call.peer;
-            if(!usersconnect.includes(idpemanggil)){
-              var idelm = idpemanggil+"-remoteid";
-              call.answer(dataStream);
-              //on stream data target
-              call.on("stream", async stream => {
-                if(remotePeerId == ""){
-                  console.log("check :",usersconnect.includes(call.peer));
-                  if(!usersconnect.includes(call.peer)){
-                    console.log("stream stream from",stream);
-                    
-                    dataAllStream.push({
-                      id : call.peer,
-                      stream : stream,
-                    });
-                    
-                    usersconnect.push(call.peer);
-                    srcStream = await generateStreamData(dataAllStream,localId.value)
-                    reloadStream();
-                    const remoteVideo = document.getElementById("localVideo");
-                    remoteVideo.srcObject = srcStream;
-                    remoteVideo.onloadedmetadata = () => remoteVideo.play();
-                  }
-                }else{
-                  console.log("stream client");
-                  const remoteVideo = document.getElementById("localVideo");
-                  remoteVideo.srcObject = stream;
-                  remoteVideo.onloadedmetadata = () => remoteVideo.play();
-                }
-              })
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script>
+        const fileInput     = document.getElementById('file-input');
+        const progressBar   = document.getElementById('progress-bar'); // Add this line
+        const idpeer        = document.getElementById('idpeer');
+        var url             = new URL(window.location.href);
+        var target          = url.searchParams.get("target");
+        const peer = new Peer({
+            config: {
+                iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' }
+                ]
             }
         });
+        const CHUNK_SIZE    = 1048576; // Define CHUNK_SIZE here
+        let receivedChunks  = []; // Add this line
 
+        console.log("target",target)
 
-        const reloadStream = () => {
-          console.log("Start reloadStream");
-          setTimeout(async ()=>{
-            for (let peerId in peer.connections) {
-              srcStream = await generateStreamData(dataAllStream,peerId,2)
-              const resCall = peer.call(peerId, srcStream);
-              console.log("reloadStream",resCall);
-            }
-          }, 1000);
-        }
+        peer.on('open', (id) => {
+            console.log('My ID:', id);
+        });
 
-        const generateStreamData = async (dataAllStream, peerId) => {
-            console.log("Start Generate", peerId);
-            const allStream = await dataAllStream.map(item => {
-                if(item.id != peerId){
-                    console.log("allStream", peerId);
-                    return item.stream;
-                }
-            }).filter(item => {
-                return item != null; 
+        peer.on('error', function(err) {
+            console.log("error",err)
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            console.log("send pesan",target)
+            const conn = peer.connect(target);
+            conn.on("open", () => {
+                conn.send("hallo gayuh!");
             });
 
-            console.log("allStream",allStream);
-            const mixer = new MultiStreamsMixer(allStream);
-            const mixedStream = mixer.getMixedStream();
-            mixer.frameInterval = 1;
-            mixer.startDrawingFrames();
-            return mixedStream
-        }
+            const file = event.target.files[0];
+            console.log(file)
+            // Create a Blob from the file
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                console.log(file.type,file.name);
+                const blob = new Blob([event.target.result], { type: file.type });
+                var conn = peer.connect(target);
+                // Send the Blob to the receiver
+                conn.on('open', function(){
+                    console.log("sending");
+                    const totalChunks = Math.ceil(blob.size / CHUNK_SIZE);
+                    let currentChunk = 0;
+                    const sendChunk = () => {
+                        const start = currentChunk * CHUNK_SIZE;
+                        const end = start + CHUNK_SIZE >= blob.size ? blob.size : start + CHUNK_SIZE;
+                        const chunk = blob.slice(start, end);
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            conn.send({
+                                file: reader.result,
+                                currentChunk,
+                                totalChunks,
+                                type: file.type,
+                                name: file.name
+                            });
+                            currentChunk++;
+                            if (currentChunk < totalChunks) {
+                                sendChunk();
+                            }
+                        };
+                        reader.readAsArrayBuffer(chunk);
+                    };
+                    sendChunk();
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
 
-        // //========================== CODE CHAT =============================//
-
-        // kirimPesan.addEventListener("click", function(){
-        //   sendmassage();
-        // });
-
-        // $("#pesan").keydown(function(e){
-        //     if(e.which == 13){
-        //       sendmassage();
-        //     }
-        // });
-
-        // $("#btncallend").click(function(){
-        //   // peer.destroy();
-        //   console.log("try to reconnecting");
-        //   peer.disconnect();
-        //   peer.reconnect();
-        // });
-
-
-        // sendmassage = () => {
-        //   let datapesan = pesanText.value;
-
-        //   if(datapesan.trim() !== ""){
-        //     let username = "Ahmad Sukron";
-        //     let userimage = "http://localhost:8080/imagesuploaded/1662042435_86f992efa42a574b0035.jpg";
-        //     console.log(usersconnect);
-        //     $("#massage-list").prepend('<div class="content-chat flex pb-3"><div class="avatar pr-3"><div class="w-7 h-7 rounded-full ring ring-primary"><img src="'+userimage+'" /></div></div><p class="text-chat text-xs"><span class="name-chat pr-1 text-sky-500">'+username+'</span> '+datapesan+'</p></div>');
-        //     usersconnect = [...new Set(usersconnect)]; //remove duplicate
-        //     usersconnect.forEach(function(item, index){
-        //         var conn = peer.connect(item);
-        //         const massage = {
-        //             status : 'commentmassage',
-        //             massage : btoa(encodeURIComponent(datapesan)),
-        //             username : username,
-        //             userimage : userimage,
-        //         };
-        //         // Send messages
-        //         console.log('try to send massage '.massage);
-        //         conn.on('open', function() {
-        //             // Send messages
-        //             conn.send(massage);
-        //         });
-        //     });
-        //     $("#pesan").val("");
-        //   }
-        // }
-
-        // const closepeerclient = (userclose) => {
-        //     var idusrclose = userclose+"-remoteid";
-        //     $("#"+idusrclose+"").parent().remove();
-
-        //     //remove id user disconnect
-        //     const index = usersconnect.indexOf(userclose);
-        //     if (index > -1) { // only splice array when item is found
-        //       usersconnect.splice(index, 1); // 2nd parameter means remove one item only
-        //     }
-        //     usersconnect.forEach(function(item, index){
-        //         if(localId.value != item){
-        //             var conn = peer.connect(item);
-        //             const massage = {
-        //                 status  : 'getallnewusers',
-        //                 users   : usersconnect,
-        //             };
-        //             // Send messages
-        //             console.log('broadcast all user ');
-        //             console.log(usersconnect);
-
-        //             conn.on('open', function() {
-        //                 // Send messages
-        //                 conn.send(massage);
-        //             });
-        //         }
-        //     });
-        // }
-
-        // let disconnectcount = 0;
-        // async function checkping(){
-        //   setInterval(async function () {
-        //     console.log("ping connection");
-        //     if(usersconnect.length > 0 && remoteId.value != ""){
-        //       //create data connection
-        //       var conn = await peer.connect(remoteId.value);
-        //       // filtering id is connected, if id is not connected remove after last iteration (index 0) 
-        //       conn.peerConnection.onconnectionstatechange = async () => {
-        //         if (!conn) return;
-        //         const state = await conn.peerConnection.connectionState;
-        //         console.log(`id:${conn.peer}`);
-        //         console.log(`connectionStateChanged22:${state}`);
-        //         if(state == "disconnected" || state == "failed"){
-        //           if(disconnectcount == 3){
-        //             gotoPeer();
-        //           }else{
-        //             disconnectcount++;
-        //             console.log("disconnectcount : "+disconnectcount);
-        //           }
-        //         }else{
-        //           disconnectcount = 0;
-        //         }
-        //       };
-        //     }
-        //   }, 5000);
-        // }
-
-        // peer.on('error', function(err){
-        //   console.log(err);
-        // });
-
-        // //kode untuk menerima pesan
-        // peer.on('connection', async function(con){
-        //     let statechange = await con.peerConnection.connectionState
-        //     let stateopen = await con._open
-        //     console.log("this connection ",con);
-        //     console.log("status user ",con.peer);
-        //     console.log("status open ",stateopen);
-        //     console.log("status connectionState ",statechange);
-
-        //     con.on('data', function(data){
-        //         console.log('Incoming data is :');
-        //         console.log(data);
-        //         console.log("con user",con.peer);
-                
-        //         if(data.status == "broadcast"){
-        //             usersconnect.push(con.peer);
-        //             console.log('user incomming : '+con.peer);
-        //         }else if (data.status == "alluserconnect"){
-        //             usersconnect = data.userid;
-        //             usersconnect.push(con.peer);
-        //             usersconnect = [...new Set(usersconnect)]; //remove duplicate
-
-        //             console.log("generate all new user :"+usersconnect.length);
-        //             console.log(data.userid);
-        //             //create multiple users peer connection
-        //             usersconnect.forEach(function(item, index){
-        //                 if(localId.value != item){
-        //                     const call = peer.call(item, dataStream);
-        //                     var idelm = item+"-remoteid";
-        //                     call.on("stream", stream => {
-        //                         console.log("generate element :");
-        //                         $("#videostreambox").append($("<div class='w-full overflow-hidden'><video id='"+idelm+"' class='userstream videobox rounded' ></video></div>").on("click",function(){
-        //                           console.log("change position4");
-        //                           $(".userstream").first().removeClass("videobox");
-        //                           $(".userstream").first().addClass("videobox");
-        //                           $(".userstream").first().parent().removeClass("col-span-2");
-        //                           $(".userstream").first().parent().removeClass("row-span-2");
-        //                           $("#"+idelm+"").parent().prependTo("#videostreambox");
-        //                           $("#"+idelm+"").removeClass("videobox");
-        //                           $("#"+idelm+"").addClass("videobox");
-        //                           $("#"+idelm+"").parent().addClass("col-span-2");
-        //                           $("#"+idelm+"").parent().addClass("row-span-2");
-        //                         }));
-
-        //                         const remoteVideo = document.getElementById(idelm);
-        //                         remoteVideo.srcObject = stream;
-        //                         remoteVideo.onloadedmetadata = () => remoteVideo.play();
-        //                     });
-
-        //                     var conn = peer.connect(item);
-        //                     const massage = {
-        //                         status  : 'getallnewusers',
-        //                         users   : usersconnect,
-        //                     };
-        //                     // Send messages
-        //                     console.log('broadcast all user ');
-        //                     console.log(usersconnect);
-
-        //                     conn.on('open', function() {
-        //                         // Send messages
-        //                         conn.send(massage);
-        //                     });
-        //                 }
-        //             });
-                    
-        //         }else if(data.status == "commentmassage"){
-        //             console.log("generate massage")
-        //             console.log(data)
-        //             console.log(usersconnect)
-        //             massagetext = decodeURIComponent(window.atob(data.massage));
-        //             console.log("massagetext",massagetext)
-
-        //             $("#massage-list").prepend('<div class="content-chat flex pb-3"><div class="avatar pr-3"><div class="w-7 h-7 rounded-full ring ring-primary"><img src="'+data.userimage+'" /></div></div><p class="text-chat text-xs"><span class="name-chat pr-1 text-sky-500">'+data.username+'</span> '+massagetext+'</p></div>');
-        //         }else if(data.status == "getallnewusers"){
-        //             usersconnect = data.users;
-        //         }
-                
-        //     });
-        //     console.log("new user",usersconnect);
-        // });
+        // recive data
+        peer.on('connection', function(conn) {
+            conn.on('data', function(data){
+                // Will print 'hi!'
+                console.log(data);
+                receivedChunks.push(data.file);
+                const progress = (100 * data.currentChunk) / data.totalChunks;
+                console.log("progress : ",progress)
+                progressBar.style.width = progress + '%';
+                if (data.currentChunk === data.totalChunks - 1) { // If this is the last chunk
+                    const receivedBlob = new Blob(receivedChunks, { type: data.type }); // Create a Blob from the received chunks
+                    const fileWithBlob = new File([receivedBlob], data.name, { type: data.type }); // Create a File from the Blob
+                    // Create an anchor element and trigger a click event on it
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(receivedBlob);
+                    a.download = fileWithBlob.name;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    receivedChunks = []; // Reset the received chunks array
+                }
+            });
+        });
     </script>
+</body>
+
 </html>
