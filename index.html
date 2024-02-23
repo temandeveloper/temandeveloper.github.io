@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test massage v4</title>
+    <title>test massage v5</title>
 </head>
 </head>
 <body>
@@ -78,8 +78,14 @@
 
 
             $("#sendMessage").click(function(){
+                ID = document.getElementById("toConnectID").value;
                 text = document.getElementById("playArea").value;
-                conn.send(text);
+                var conn2 = peer1.connect(ID);
+                // on open will be launch when you successfully connect to PeerServer
+                conn2.on('open', function(){
+                    // here you have conn.id
+                    conn2.send(text);
+                });
                 console.log("Data sent: "+text);
             });
 
