@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test massage v2</title>
+    <title>test massage v3</title>
 </head>
 </head>
 <body>
@@ -25,6 +25,8 @@
         <script>
             console.log("JS Started");
             var peer1 = new Peer({
+                host: "peers-peerjsserver-rg91q64z4wb.ws-us108.gitpod.io",
+                port: 9001,
                 config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] },
             });
 
