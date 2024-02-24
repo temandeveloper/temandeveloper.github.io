@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test massage v7</title>
+    <title>test massage v8</title>
 </head>
 </head>
 <body>
@@ -13,7 +13,6 @@
     <label id="yourID">Your ID is: </label><br>
     <label id="currentConn">You are currently connected to: </label>
     <div>
-        <button id="connectButton">Connect to this ID</button>
         <input type="text" id="toConnectID">
     </div>
     <hr>
@@ -40,46 +39,21 @@
                 }
             })
 
-            document.getElementById("connectButton").disabled = true;
-            document.getElementById("sendMessage").disabled = true;
             var conn;
             peer1.on('open', function(id){
                 console.log("Peer1 ready");
-                document.getElementById("connectButton").disabled = false;
                 document.getElementById("yourID").innerHTML = "Your ID is: "+id;
-
-
             });
 
             peer1.on('connection', function(dataConnection){
+                console.log("Connected",dataConnection)
                 document.getElementById("sendMessage").disabled = false;
                 document.getElementById("currentConn").innerHTML = "You are currently connected to: "+dataConnection.peer;
-                conn = dataConnection;
-                conn.on('data', function(data){
+                dataConnection.on('data', function(data){
                     console.log("Data received: "+data);
                     document.getElementById("playArea").value = data;
                 });
-                console.log("Connected")
-
             });
-
-
-            $("#connectButton").click(function(){
-                ID = document.getElementById("toConnectID").value;
-                conn = peer1.connect(ID);
-                conn.on('open',function(){
-                    console.log("open")
-                    conn.on('data', function(data){
-                        console.log("Data received: "+data);
-                        document.getElementById("playArea").value = data;
-                    });
-                })
-                document.getElementById("currentConn").innerHTML = "You are currently connected to: "+ID;
-                document.getElementById("sendMessage").disabled = false;
-            });
-
-
-
 
             $("#sendMessage").click(function(){
                 ID = document.getElementById("toConnectID").value;
@@ -87,6 +61,9 @@
                 var conn2 = peer1.connect(ID);
                 // on open will be launch when you successfully connect to PeerServer
                 conn2.on('open', function(){
+                    conn2.on('data', function(data) {
+                        console.log('Received055', data);
+                    });
                     // here you have conn.id
                     conn2.send(text);
                 });
