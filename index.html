@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test massage v8</title>
+    <title>test massage v9</title>
 </head>
 </head>
 <body>
@@ -23,21 +23,12 @@
     </div>
         <script>
             console.log("JS Started");
+            var config = { 'iceServers': [{ 'urls': ['stun:stun.l.google.com:19302'] }] };
             const peer1 = new Peer(`${Math.floor(Math.random() * 2 ** 18)
                 .toString(36)
                 .padStart(4, 0)}`,
-            {
-                host: '0.peerjs.com',
-                debug: 1,
-                config: { 'iceServers': [
-                        {
-                            url: 'turn:194.60.83.23:3478',
-                            credential: 'credentials',
-                            username: 'username'
-                        }
-                    ]
-                }
-            })
+                config,
+            )
 
             var conn;
             peer1.on('open', function(id){
